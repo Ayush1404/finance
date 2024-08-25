@@ -37,7 +37,7 @@ const Actions = ({
             });
 
             if (response?.data.success) {
-                setAccounts((prev)=>prev.filter((account)=>account.id !==response.data.data._id))
+                setAccounts((prev)=>prev.filter((account)=>account.id !==response.data.data.id))
                 toast.success(response?.data.message);
             } else {
               toast.error(response?.data.message);
@@ -48,6 +48,7 @@ const Actions = ({
             }
             else {
                 toast.error("Something went wrong!");
+                console.log(err)
             }
         } finally {
             setDisabled(false); // Set loading to false

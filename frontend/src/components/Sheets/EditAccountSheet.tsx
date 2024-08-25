@@ -55,7 +55,7 @@ const EditAccountSheet = () => {
             });
 
             if (response?.data.success) {
-                setAccounts((prev)=>prev.map((account)=>account.id===response.data.data._id ? {
+                setAccounts((prev)=>prev.map((account)=>account.id===response.data.data.id ? {
                     ...account,
                     name:response.data.data.name
                 }:account))
@@ -95,7 +95,7 @@ const EditAccountSheet = () => {
             });
 
             if (response?.data.success) {
-                setAccounts((prev)=>prev.filter((account)=>account.id !==response.data.data._id))
+                setAccounts((prev)=>prev.filter((account)=>account.id !==response.data.data.id))
                 onClose()
                 toast.success(response?.data.message);
             } else {

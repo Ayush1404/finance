@@ -55,7 +55,7 @@ const EditCategorySheet = () => {
             });
 
             if (response?.data.success) {
-                setCategories((prev)=>prev.map((category)=>category.id===response.data.data._id ? {
+                setCategories((prev)=>prev.map((category)=>category.id===response.data.data.id ? {
                     ...category,
                     name:response.data.data.name
                 }:category))
@@ -95,7 +95,7 @@ const EditCategorySheet = () => {
             });
 
             if (response?.data.success) {
-                setCategories((prev)=>prev.filter((category)=>category.id !==response.data.data._id))
+                setCategories((prev)=>prev.filter((category)=>category.id !==response.data.data.id))
                 onClose()
                 toast.success(response?.data.message);
             } else {

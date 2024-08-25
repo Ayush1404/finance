@@ -37,7 +37,7 @@ const Actions = ({
             });
 
             if (response?.data.success) {
-                setCategories((prev)=>prev.filter((category)=>category.id !==response.data.data._id))
+                setCategories((prev)=>prev.filter((category)=>category.id !==response.data.data.id))
                 toast.success(response?.data.message);
             } else {
               toast.error(response?.data.message);
