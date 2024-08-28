@@ -10,6 +10,8 @@ import ProtectedRoute from './components/general/ProtectedRoute';
 import Layout from './Layouts/Layout';
 import Accounts from './pages/Accounts';
 import Categories from './pages/Categories';
+import NewTransactionSheet from './components/Sheets/NewTransactionSheet';
+import Transactions from './pages/Transactions';
 
 
 function App() {
@@ -45,6 +47,15 @@ function App() {
               element={<ProtectedRoute>
                           <Layout>
                             <Categories />
+                          </Layout>
+                        </ProtectedRoute>}
+              >
+            </Route>
+            <Route 
+              path="/transactions" 
+              element={<ProtectedRoute>
+                          <Layout>
+                            <Transactions />
                           </Layout>
                         </ProtectedRoute>}
               >

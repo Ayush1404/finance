@@ -76,18 +76,18 @@ router.put('/:categoryId', authMiddleware_1.authenticateJwt, (req, res) => __awa
         }
         const categoryId = Number(req.params.categoryId.split(':')[1]);
         const existingCategory = yield dbconfig_1.prisma.category.findFirst({
-            where: { name: req.body.name, userId: Number(req.headers.id), NOT: { id: categoryId } }
+            where: { userId: Number(req.headers.id), id: categoryId }
         });
-        if (existingCategory)
-            return res.status(409).send({ errors: { name: 'Category with given name already exists' }, success: false });
-        const updatedCategory = yield dbconfig_1.prisma.category.updateMany({
+        if (!existingCategory)
+            return res.status(409).send({ errors: { name: "Category with given id doesn't exist" }, success: false });
+        const updatedCategory = yield dbconfig_1.prisma.category.update({
             where: {
                 id: categoryId,
                 userId: Number(req.headers.id)
             },
             data: { name: req.body.name }
         });
-        if (updatedCategory.count === 0)
+        if (!updatedCategory)
             return res.status(500).send({ message: "No category found for this user with given id", success: false });
         const category = yield dbconfig_1.prisma.category.findUnique({ where: { id: categoryId } });
         return res.status(200).send({
@@ -104,13 +104,13 @@ router.put('/:categoryId', authMiddleware_1.authenticateJwt, (req, res) => __awa
 router.delete('/:categoryId', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const categoryId = Number(req.params.categoryId.split(':')[1]);
-        const deletedCategory = yield dbconfig_1.prisma.category.deleteMany({
+        const deletedCategory = yield dbconfig_1.prisma.category.delete({
             where: {
                 id: categoryId,
                 userId: Number(req.headers.id)
             }
         });
-        if (deletedCategory.count === 0)
+        if (!deletedCategory)
             return res.status(500).send({ message: "No category found for this user with given id", success: false });
         return res.status(200).send({
             success: true,

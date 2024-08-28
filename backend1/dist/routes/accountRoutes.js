@@ -76,18 +76,18 @@ router.put('/:accountId', authMiddleware_1.authenticateJwt, (req, res) => __awai
         }
         const accountId = Number(req.params.accountId.split(':')[1]);
         const existingAccount = yield dbconfig_1.prisma.account.findFirst({
-            where: { name: req.body.name, userId: Number(req.headers.id), NOT: { id: accountId } }
+            where: { userId: Number(req.headers.id), id: accountId }
         });
-        if (existingAccount)
-            return res.status(409).send({ errors: { name: 'Account with given name already exists' }, success: false });
-        const updatedAccount = yield dbconfig_1.prisma.account.updateMany({
+        if (!existingAccount)
+            return res.status(409).send({ errors: { name: "Account with given id doesn't exist" }, success: false });
+        const updatedAccount = yield dbconfig_1.prisma.account.update({
             where: {
                 id: accountId,
                 userId: Number(req.headers.id)
             },
             data: { name: req.body.name }
         });
-        if (updatedAccount.count === 0)
+        if (!updatedAccount)
             return res.status(500).send({ message: "No account found for this user with given id", success: false });
         const account = yield dbconfig_1.prisma.account.findUnique({ where: { id: accountId } });
         return res.status(200).send({
@@ -104,13 +104,13 @@ router.put('/:accountId', authMiddleware_1.authenticateJwt, (req, res) => __awai
 router.delete('/:accountId', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const accountId = Number(req.params.accountId.split(':')[1]);
-        const deletedAccount = yield dbconfig_1.prisma.account.deleteMany({
+        const deletedAccount = yield dbconfig_1.prisma.account.delete({
             where: {
                 id: accountId,
                 userId: Number(req.headers.id)
             }
         });
-        if (deletedAccount.count === 0)
+        if (!deletedAccount)
             return res.status(500).send({ message: "No account found for this user with given id", success: false });
         return res.status(200).send({
             success: true,
