@@ -75,7 +75,6 @@ router.get('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 0
 }));
 router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // Validate the transaction data
         const { error } = (0, validators_1.transactionValidate)(req.body);
         if (error) {
             const errors = {};
@@ -84,25 +83,10 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
             });
             return res.status(400).send({ errors, success: false });
         }
-        // Check for an existing transaction with the same name for the user
-        const existingTransaction = yield dbconfig_1.prisma.transaction.findFirst({
-            where: {
-                name: req.body.name,
-                userId: Number(req.headers.id)
-            }
-        });
-        if (existingTransaction) {
-            return res.status(409).send({
-                errors: { name: 'Transaction with given name already exists' },
-                success: false
-            });
-        }
-        // Create a new transaction
         const newTransaction = yield dbconfig_1.prisma.transaction.create({
             data: {
-                name: req.body.name,
                 payee: req.body.payee,
-                amount: BigInt(req.body.amount),
+                amount: req.body.amount,
                 notes: req.body.notes || null,
                 date: new Date(req.body.date),
                 accountId: req.body.accountId,
@@ -111,7 +95,6 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
             },
             select: {
                 id: true,
-                name: true,
                 payee: true,
                 amount: true,
                 date: true,

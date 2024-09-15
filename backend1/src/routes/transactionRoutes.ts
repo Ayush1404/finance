@@ -74,7 +74,7 @@ router.get('/', authenticateJwt, async (req: Request, res: Response) => {
 
 router.post('/', authenticateJwt, async (req: Request, res: Response) => {
     try {
-        // Validate the transaction data
+        
         const { error } = transactionValidate(req.body);
 
         if (error) {
@@ -85,27 +85,10 @@ router.post('/', authenticateJwt, async (req: Request, res: Response) => {
             return res.status(400).send({ errors, success: false });
         }
 
-        // Check for an existing transaction with the same name for the user
-        const existingTransaction = await prisma.transaction.findFirst({
-            where: { 
-                name: req.body.name, 
-                userId: Number(req.headers.id) 
-            }
-        });
-
-        if (existingTransaction) {
-            return res.status(409).send({ 
-                errors: { name: 'Transaction with given name already exists' }, 
-                success: false 
-            });
-        }
-
-        // Create a new transaction
         const newTransaction = await prisma.transaction.create({
             data: { 
-                name: req.body.name,
                 payee: req.body.payee,
-                amount: BigInt(req.body.amount), 
+                amount: req.body.amount, 
                 notes: req.body.notes || null,
                 date: new Date(req.body.date), 
                 accountId: req.body.accountId,
@@ -114,7 +97,6 @@ router.post('/', authenticateJwt, async (req: Request, res: Response) => {
             },
             select: { 
                 id: true, 
-                name: true, 
                 payee: true, 
                 amount: true, 
                 date: true, 

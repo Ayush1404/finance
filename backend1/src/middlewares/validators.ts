@@ -86,9 +86,8 @@ export const accountValidate = (data: any) => {
 // Transaction validation
 export const transactionValidate = (data: any) => {
   const schema = z.object({
-    name: z.string().min(1, { message: 'Name is required' }),
     payee: z.string().min(1, { message: 'Payee is required' }),
-    amount: z.bigint(),
+    amount: z.string(),
     notes: z.string().optional(),
     date: z.string().or(z.date()).optional().default(() => new Date().toISOString()),
     accountId: z.number().int().positive({ message: 'Account ID must be a positive integer' }),
@@ -106,9 +105,9 @@ export const transactionValidate = (data: any) => {
 // Transaction Filter validation
 export const transactionFilterValidate = (data: any) => {
   const schema = z.object({
-    from:z.string().optional(),
-    to:z.string().optional(),
-    accountId:z.string().optional()
+    from: z.string().optional(),
+    to: z.string().optional(),
+    accountId: z.string().optional()
   });
 
   try {

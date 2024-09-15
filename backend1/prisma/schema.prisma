@@ -47,9 +47,8 @@ model Category {
 
 model Transaction {
   id         Int       @id @default(autoincrement())
-  name       String
   payee      String
-  amount     BigInt    @default(0)
+  amount     String    @default("0")
   notes      String?
   date       DateTime  @default(now())
   accountId  Int
