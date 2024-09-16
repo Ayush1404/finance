@@ -89,7 +89,7 @@ const transactionValidate = (data) => {
     const schema = zod_1.z.object({
         payee: zod_1.z.string().min(1, { message: 'Payee is required' }),
         amount: zod_1.z.string(),
-        notes: zod_1.z.string().optional(),
+        notes: zod_1.z.string().optional().nullable().default(''),
         date: zod_1.z.string().or(zod_1.z.date()).optional().default(() => new Date().toISOString()),
         accountId: zod_1.z.number().int().positive({ message: 'Account ID must be a positive integer' }),
         categoryId: zod_1.z.number().int().positive({ message: 'Category ID must be a positive integer' }).optional().nullable(),

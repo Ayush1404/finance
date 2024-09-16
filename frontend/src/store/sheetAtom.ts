@@ -23,7 +23,8 @@ interface EditTransactionSheetState {
         payee:string,
         amount:string,
         accountId:string,
-        categoryId:string
+        categoryId:string,
+        notes:string|null
     }
 }
 
@@ -66,7 +67,8 @@ const sheetAtom = atom<SheetsState>({
                 payee:'',
                 amount:'',
                 accountId:'',
-                categoryId:''
+                categoryId:'',
+                notes:''
             }
         }
     },

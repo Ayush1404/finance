@@ -151,7 +151,27 @@ router.put('/:transactionId', authMiddleware_1.authenticateJwt, (req, res) => __
         });
         if (!updatedTransaction)
             return res.status(500).send({ message: "No transaction found for this user with given id", success: false });
-        const transaction = yield dbconfig_1.prisma.transaction.findUnique({ where: { id: transactionId } });
+        const transaction = yield dbconfig_1.prisma.transaction.findUnique({
+            where: { id: transactionId },
+            select: {
+                id: true,
+                payee: true,
+                amount: true,
+                date: true,
+                accountId: true,
+                categoryId: true,
+                category: {
+                    select: {
+                        name: true
+                    }
+                },
+                account: {
+                    select: {
+                        name: true
+                    }
+                }
+            }
+        });
         return res.status(200).send({
             success: true,
             data: transaction,
@@ -200,9 +220,10 @@ router.post('/bulkdelete', authMiddleware_1.authenticateJwt, (req, res) => __awa
             where: { userId: Number(req.headers.id) },
             select: { id: true }
         });
+        const newTransactionIds = transactions.map((transaction) => transaction.id);
         return res.status(200).send({
             success: true,
-            data: transactions
+            data: newTransactionIds
         });
     }
     catch (error) {

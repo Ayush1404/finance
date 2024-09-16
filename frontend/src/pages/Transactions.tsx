@@ -11,9 +11,13 @@ import { toast } from "react-toastify"
 import transactionsAtom from "../store/transactionsAtom"
 import { Skeleton } from "../components/ui/skeleton"
 import disabledAtom from "../store/disabledAtom"
+import accountsAtom from "../store/accountsAtom"
+import categoriesAtom from "../store/categoriesAtom"
 
 const Transactions = () => {
     const [transactions,setTransactions] = useRecoilState(transactionsAtom)
+    const [accounts,setAccounts] = useRecoilState(accountsAtom)
+    const [categories,setCategories] = useRecoilState(categoriesAtom)
     const [loading,setLoading] = useState(false)
     const [disabled,setDisabled] = useRecoilState(disabledAtom)
     const setIsNewTransactionOpen = useSetRecoilState(newTransactionSheet)
@@ -32,7 +36,8 @@ const Transactions = () => {
 
             if (response.data.success) {
                 toast.success("Transactions successfully deleted")
-                setTransactions(([...response.data.data ]));
+                
+                setTransactions((prev)=>prev.filter((transaction)=>!response.data.data.includes(transaction.id)))
             } else {
                 console.log("Error deleting transactions.")
             }
@@ -42,6 +47,7 @@ const Transactions = () => {
             }
             else {
                 toast.error("Something went wrong!");
+                console.log(err)
             }
         } finally {
             setDisabled(false);
@@ -76,9 +82,71 @@ const Transactions = () => {
             setLoading(false);
         }
     }
+
+    
+
+    const getAccountData = async () =>{
+        try {
+            setLoading(true)
+            const token = localStorage.getItem('authToken');
+
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/account`, {
+                headers: {
+                'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.data.success) {
+                
+                setAccounts(([...response.data.data ]));
+            } else {
+                console.log("Error getting accounts.")
+            }
+        } catch (err:any) {
+            if (err.response?.data?.message) {
+                toast.error(err.response.data.message);
+            }
+            else {
+                toast.error("Something went wrong!");
+            }
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const getCategoryData = async () =>{
+        try {
+            setLoading(true)
+            const token = localStorage.getItem('authToken');
+
+            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/category`, {
+                headers: {
+                'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.data.success) {
+                
+                setCategories(([...response.data.data ]));
+            } else {
+                console.log("Error getting categories.")
+            }
+        } catch (err:any) {
+            if (err.response?.data?.message) {
+                toast.error(err.response.data.message);
+            }
+            else {
+                toast.error("Something went wrong!");
+            }
+        } finally {
+            setLoading(false);
+        }
+    }
     
     useEffect(()=>{
         getTransactionData()
+        getCategoryData()
+        getAccountData()
     },[])
 
     if(loading) return(

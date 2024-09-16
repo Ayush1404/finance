@@ -164,7 +164,27 @@ router.put('/:transactionId', authenticateJwt, async (req: Request, res: Respons
         if (!updatedTransaction)
             return res.status(500).send({ message: "No transaction found for this user with given id", success: false });
 
-        const transaction = await prisma.transaction.findUnique({ where: { id: transactionId } });
+        const transaction = await prisma.transaction.findUnique({ 
+            where: { id: transactionId }, 
+            select:{
+                id: true, 
+                payee: true, 
+                amount: true, 
+                date: true, 
+                accountId: true, 
+                categoryId: true,
+                category:{
+                    select:{
+                        name:true
+                    }
+                },
+                account:{
+                    select:{
+                        name:true
+                    }
+                }
+            }
+        });
 
         return res.status(200).send({
             success: true,
@@ -219,10 +239,10 @@ router.post('/bulkdelete', authenticateJwt, async (req: Request, res: Response) 
             where: { userId: Number(req.headers.id) },
             select: { id: true}
         });
-
+        const newTransactionIds = transactions.map((transaction)=>transaction.id)
         return res.status(200).send({
             success: true,
-            data: transactions
+            data: newTransactionIds
         });
         
     } catch (error) {

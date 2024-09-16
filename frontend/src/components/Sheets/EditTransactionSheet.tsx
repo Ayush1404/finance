@@ -1,64 +1,84 @@
 import { useRecoilState, useSetRecoilState } from "recoil"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "../ui/sheet"
-import { editAtransactionSheet } from "../../store/sheetAtom"
+import { editTransactionSheet } from "../../store/sheetAtom"
 import { useState } from "react"
-import AtransactionForm, { AtransactionFormInput } from "../forms/AtransactionForm"
+import TransactionForm, { TransactionFormInput } from "../forms/TransactionForm"
 import axios from "axios"
 import { toast } from "react-toastify"
-import atransactionsAtom from "../../store/atransactionsAtom"
+import TransactionsAtom from "../../store/transactionsAtom"
 import { confrimationDialog } from "../../store/dialogAtom"
+import { convertAmountFromMiliUnits, convertAmountToMiliUnits } from "../../lib/utils"
 
 export type EditAtransactionErrorMessages ={
-    name?:string,
     [key: string]: string | undefined;
 }
-const EditAtransactionSheet = () => {
-    const setAtransactions = useSetRecoilState(atransactionsAtom)
-    const [editAtransactionSheetState,setEditAtransactionSheetState] = useRecoilState(editAtransactionSheet)
-    const onClose = () => setEditAtransactionSheetState({
+const EditTransactionSheet = () => {
+    const setTransactions = useSetRecoilState(TransactionsAtom)
+    const [editTransactionSheetState,setEditTransactionSheetState] = useRecoilState(editTransactionSheet)
+    const onClose = () => setEditTransactionSheetState({
         isOpen:false,
         id:'',
         values:{
-            name:''
+            id:'',
+            date: new Date(),
+            accountId: '',
+            categoryId: '',
+            payee: '',
+            amount: '',
+            notes: '',  
         }
     })
     
-    const setValue = (newValues:Partial<AtransactionFormInput>) =>{
-        setEditAtransactionSheetState((prev)=>({
-            ...prev,
-            values:{
-                ...prev.values,
-                ...newValues
-            }
-        }))
+    const setValue = (newValues:Partial<TransactionFormInput>) =>{
+        
+        setEditTransactionSheetState((prev)=>{
+            return({
+                ...prev,
+                values:{
+                    ...prev.values,
+                    ...newValues
+                }
+            })
+        })
     }
 
     const [errors,setErrors] = useState<EditAtransactionErrorMessages>({})
     const setConfirmDialogue = useSetRecoilState(confrimationDialog)
     const [isLoading,setIsLoading] = useState(false)
 
-    const editAtransaction = async () => {
+    const editTransaction = async () => {
         try {
-            setIsLoading(true); // Set loading to true
-            setErrors({}); // Clear previous errors
+            setIsLoading(true); 
+            setErrors({}); 
             
             const token = localStorage.getItem("authToken");
             if (!token) {
                 toast.error("No token found");
                 return;
             }
-
-            const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/atransaction/:${editAtransactionSheetState.id}`, editAtransactionSheetState.values, {
+            const amountInCents = BigInt(Math.round(convertAmountToMiliUnits(parseFloat(editTransactionSheetState.values.amount))))
+            const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/transaction/:${editTransactionSheetState.id}`,
+                {
+                    ...editTransactionSheetState.values,
+                    amount:amountInCents.toString()
+                }, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             });
 
             if (response?.data.success) {
-                setAtransactions((prev)=>prev.map((atransaction)=>atransaction.id===response.data.data.id ? {
-                    ...atransaction,
-                    name:response.data.data.name
-                }:atransaction))
+                setTransactions((prev)=>prev.map((transaction)=>transaction.id===response.data.data.id ? {
+                    ...transaction,
+                    date: response.data.data.date,
+                    accountId: response.data.data.accountId,
+                    categoryId: response.data.data.categoryId,
+                    payee: response.data.data.payee,
+                    amount: response.data.data.amount,
+                    notes: response.data.data.notes, 
+                    account : response.data.data.account,
+                    category : response.data.data.category,
+                }:transaction))
                 onClose()
                 toast.success(response?.data.message);
             } else {
@@ -73,29 +93,30 @@ const EditAtransactionSheet = () => {
             }
             else {
                 toast.error("Something went wrong!");
+                console.log(err)
             }
         } finally {
-            setIsLoading(false); // Set loading to false
+            setIsLoading(false); 
         }
     };
     
-    const deleteAtransaction = async () => {
+    const deleteTransaction = async () => {
         try {
-            setIsLoading(true); // Set loading to true  
+            setIsLoading(true); 
             const token = localStorage.getItem("authToken");
             if (!token) {
                 toast.error("No token found");
                 return;
             }
 
-            const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/atransaction/:${editAtransactionSheetState.id}`, {
+            const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/transaction/:${editTransactionSheetState.id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             });
 
             if (response?.data.success) {
-                setAtransactions((prev)=>prev.filter((atransaction)=>atransaction.id !==response.data.data.id))
+                setTransactions((prev)=>prev.filter((transaction)=>transaction.id !==response.data.data.id))
                 onClose()
                 toast.success(response?.data.message);
             } else {
@@ -114,31 +135,31 @@ const EditAtransactionSheet = () => {
     };
 
     return (
-        <Sheet open={editAtransactionSheetState.isOpen} onOpenChange={onClose}>
+        <Sheet open={editTransactionSheetState.isOpen} onOpenChange={onClose}>
             <SheetContent className="space-y-4">
                 <SheetHeader>
                     <SheetTitle>
-                        New Atransaction
+                        Edit transaction
                     </SheetTitle>
                     <SheetDescription>
-                        Create a new atransaction to track your transactions.
+                        Edit your transaction here.
                     </SheetDescription>
                 </SheetHeader>
-                <AtransactionForm
-                    id={editAtransactionSheetState.id}
-                    values={editAtransactionSheetState.values}
+                <TransactionForm
+                    id={editTransactionSheetState.id}
+                    values={editTransactionSheetState.values}
                     setValues={setValue}
                     disabled={isLoading}
                     onDelete={()=>{
                         setConfirmDialogue((prev)=>({
                             ...prev,
-                            primaryAction:deleteAtransaction,
+                            primaryAction:deleteTransaction,
                             isOpen:true,
                             title:"Are you sure?",
-                            message:"Delete this atransaction"
+                            message:"Delete this transaction"
                         }))
                     }}
-                    onSubmit={editAtransaction}
+                    onSubmit={editTransaction}
                     errors={errors}
                 />
             </SheetContent>
@@ -146,4 +167,4 @@ const EditAtransactionSheet = () => {
   )
 }
 
-export default EditAtransactionSheet
+export default EditTransactionSheet

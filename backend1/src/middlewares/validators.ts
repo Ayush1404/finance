@@ -88,7 +88,7 @@ export const transactionValidate = (data: any) => {
   const schema = z.object({
     payee: z.string().min(1, { message: 'Payee is required' }),
     amount: z.string(),
-    notes: z.string().optional(),
+    notes: z.string().optional().nullable().default(''),
     date: z.string().or(z.date()).optional().default(() => new Date().toISOString()),
     accountId: z.number().int().positive({ message: 'Account ID must be a positive integer' }),
     categoryId: z.number().int().positive({ message: 'Category ID must be a positive integer' }).optional().nullable(),

@@ -18,7 +18,7 @@ export type TransactionFormInput = {
   categoryId: string,
   payee: string,
   amount: string,
-  notes: string
+  notes: string | null
 }
 
 type TransactionFormProps = {
@@ -104,7 +104,7 @@ const TransactionForm = ({
                 <Textarea 
                     id="notes" 
                     placeholder="Add optional notes"
-                    value={values.notes}
+                    value={values.notes || ''}
                     onChange={(e) => setValues({notes: e.target.value})}
                     disabled={disabled}
                 />
