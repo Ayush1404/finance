@@ -6,6 +6,7 @@ import TransactionForm, { TransactionFormInput } from "../forms/TransactionForm"
 import axios from "axios"
 import { toast } from "react-toastify"
 import transactionsAtom from "../../store/transactionsAtom"
+import { convertAmountToMiliUnits } from "../../lib/utils"
 
 export type NewTransactionErrorMessages = {
     [key: string]: string | undefined;
@@ -30,7 +31,7 @@ const NewTransactionSheet = () => {
         categoryId: '',
         payee: '',
         amount: '',
-        notes: '',  // Defaulting to empty string
+        notes: '',  
     })
     const setValue = (newValues: Partial<TransactionFormInput>) => {
         setValues((prevValues) => ({
@@ -48,7 +49,7 @@ const NewTransactionSheet = () => {
             const token = localStorage.getItem('authToken')
             
             // Convert amount to BigInt
-            const amountInCents = BigInt(Math.round(parseFloat(values.amount) * 100))
+            const amountInCents = BigInt(Math.round(convertAmountToMiliUnits(parseFloat(values.amount))))
             
             const response = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/transaction`,

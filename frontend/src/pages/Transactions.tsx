@@ -101,7 +101,7 @@ const Transactions = () => {
             <Card className="border-none drop-shadow-sm">
                 <CardHeader className="gap-y-2 lg:flex-row lg:items-center lg:justify-between">
                     <CardTitle className="text-2xl line-clamp-1">
-                       Your Transactions
+                       Transaction History
                     </CardTitle>
                     <Button 
                         className="sm"
@@ -114,7 +114,7 @@ const Transactions = () => {
                 <CardContent>
                     <div>
                         <DataTable 
-                            filterKey=""
+                            filterKey="date"
                             columns={columns} 
                             data={transactions} 
                             onDelete={(
