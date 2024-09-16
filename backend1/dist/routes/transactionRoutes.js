@@ -99,7 +99,17 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
                 amount: true,
                 date: true,
                 accountId: true,
-                categoryId: true
+                categoryId: true,
+                category: {
+                    select: {
+                        name: true
+                    }
+                },
+                account: {
+                    select: {
+                        name: true
+                    }
+                }
             }
         });
         return res.status(201).send({

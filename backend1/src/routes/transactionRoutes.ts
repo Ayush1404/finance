@@ -101,7 +101,17 @@ router.post('/', authenticateJwt, async (req: Request, res: Response) => {
                 amount: true, 
                 date: true, 
                 accountId: true, 
-                categoryId: true 
+                categoryId: true,
+                category:{
+                    select:{
+                        name:true
+                    }
+                },
+                account:{
+                    select:{
+                        name:true
+                    }
+                }
             }
         });
 
