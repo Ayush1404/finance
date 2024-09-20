@@ -5,6 +5,7 @@ import { router as accountRouter } from "./routes/accountRoutes";
 import { router as userRouter } from "./routes/userRoutes";
 import { router as categoryRouter } from "./routes/categoryRoutes";
 import { router as transactionRouter } from "./routes/transactionRoutes";
+import { router as summaryRouter } from "./routes/summaryRoutes";
 
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use("/api/account", accountRouter);
 app.use("/api/user", userRouter);  
 app.use("/api/category", categoryRouter); 
 app.use("/api/transaction", transactionRouter); 
+app.use("/api/summary", summaryRouter); 
 
 app.get('/', (req, res) => {
   res.json("server is running");

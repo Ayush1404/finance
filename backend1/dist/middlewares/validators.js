@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.transactionFilterValidate = exports.transactionValidate = exports.accountValidate = exports.categoryValidate = exports.registerValidate = exports.loginValidate = void 0;
+exports.summaryFilterValidate = exports.transactionFilterValidate = exports.transactionValidate = exports.accountValidate = exports.categoryValidate = exports.registerValidate = exports.loginValidate = void 0;
 const zod_1 = require("zod");
 // Define the password complexity schema
 const passwordComplexity = zod_1.z
@@ -119,3 +119,19 @@ const transactionFilterValidate = (data) => {
     }
 };
 exports.transactionFilterValidate = transactionFilterValidate;
+// Summary Filter validation
+const summaryFilterValidate = (data) => {
+    const schema = zod_1.z.object({
+        from: zod_1.z.string().optional(),
+        to: zod_1.z.string().optional(),
+        accountId: zod_1.z.string().optional()
+    });
+    try {
+        schema.parse(data);
+        return { error: null };
+    }
+    catch (e) {
+        return { error: e.errors };
+    }
+};
+exports.summaryFilterValidate = summaryFilterValidate;

@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateJwt } from '../middlewares/authMiddleware';
 import { transactionFilterValidate, transactionValidate } from '../middlewares/validators';
 import { prisma } from '../config/dbconfig';
@@ -26,7 +25,6 @@ router.get('/', authenticateJwt, async (req: Request, res: Response) => {
 
         const startDate =  from ? parse(from , 'yyyy-MM-dd' , new Date()) : defaultFrom
         const endDate =  to ? parse(to , 'yyyy-MM-dd' , new Date()) : defaultTo
-
 
         const transactions = await prisma.transaction.findMany({
             where: { 

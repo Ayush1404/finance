@@ -117,3 +117,19 @@ export const transactionFilterValidate = (data: any) => {
     return { error: e.errors };
   }
 };
+
+// Summary Filter validation
+export const summaryFilterValidate = (data: any) => {
+  const schema = z.object({
+    from: z.string().optional(),
+    to: z.string().optional(),
+    accountId: z.string().optional()
+  });
+
+  try {
+    schema.parse(data);
+    return { error: null };
+  } catch (e: any) {
+    return { error: e.errors };
+  }
+};
