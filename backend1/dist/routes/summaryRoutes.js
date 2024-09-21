@@ -14,6 +14,7 @@ const date_fns_1 = require("date-fns");
 const authMiddleware_1 = require("../middlewares/authMiddleware");
 const validators_1 = require("../middlewares/validators");
 const dbconfig_1 = require("../config/dbconfig");
+const utils_1 = require("../lib/utils");
 const router = require('express').Router();
 exports.router = router;
 router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -51,7 +52,6 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
                 return result;
             });
         }
-        console.log(req.headers.id, startDate, endDate, accountId);
         //@ts-ignore
         const [currentPeriod] = yield fetchFinancialData(
         //@ts-ignore
@@ -60,11 +60,62 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
         const [lastPeriod] = yield fetchFinancialData(
         //@ts-ignore
         req.headers.id, startDate, endDate);
+        const incomeChange = (0, utils_1.calculatePercentageChange)(currentPeriod.income, lastPeriod.income);
+        const expensesChange = (0, utils_1.calculatePercentageChange)(currentPeriod.expenses, lastPeriod.expenses);
+        const remainingChange = (0, utils_1.calculatePercentageChange)(currentPeriod.remaining, lastPeriod.remaining);
+        const categories = yield dbconfig_1.prisma.$queryRaw `
+            SELECT 
+            c.name AS category,
+            SUM(ABS(amount::numeric)) AS value
+            FROM "Transaction" t
+            INNER JOIN "Category" c ON t."categoryId" = c.id
+            WHERE t."userId" = ${
+        //@ts-ignore
+        parseInt(req.headers.id)}
+            AND t."accountId" = ${parseInt(accountId)}
+            AND t."date" >= ${startDate}
+            AND t."date" <= ${endDate}
+            AND t.amount::numeric  < 0
+
+            GROUP BY c.name
+            ORDER BY value DESC;
+        `;
+        const topCategories = categories.slice(0, 3);
+        const otherCategories = categories.slice(3);
+        const otherSum = otherCategories.reduce((sum, curr) => sum + curr.value, 0);
+        const finalCategories = topCategories;
+        if (otherCategories.length > 0) {
+            finalCategories.push({
+                name: 'Other',
+                value: otherSum
+            });
+        }
+        const activeDays = yield dbconfig_1.prisma.$queryRaw `
+            SELECT 
+            t."date" as date,
+            SUM(CASE WHEN t.amount::numeric > 0 THEN t.amount::numeric ELSE 0 END) AS income,
+            SUM(CASE WHEN t.amount::numeric < 0 THEN ABS(t.amount::numeric) ELSE 0 END) AS expenses
+            FROM "Transaction" t
+            WHERE t."userId" = ${
+        //@ts-ignore
+        parseInt(req.headers.id)}
+            AND t."accountId" = ${parseInt(accountId)}
+            AND t."date" >= ${startDate}
+            AND t."date" <= ${endDate}
+            GROUP BY t."date"
+            ORDER BY t."date" ASC;
+        `;
+        const finalDays = (0, utils_1.fillMissingDates)(activeDays, startDate, endDate);
         return res.status(200).send({
             success: true,
             data: {
                 currentPeriod,
-                lastPeriod
+                lastPeriod,
+                incomeChange,
+                expensesChange,
+                remainingChange,
+                finalCategories,
+                finalDays
             }
         });
     }

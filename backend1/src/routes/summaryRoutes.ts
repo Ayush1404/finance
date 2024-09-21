@@ -3,6 +3,7 @@ import { authenticateJwt } from "../middlewares/authMiddleware";
 import { summaryFilterValidate } from "../middlewares/validators";
 import { Request, Response } from 'express';
 import { prisma } from "../config/dbconfig";
+import { calculatePercentageChange, fillMissingDates } from "../lib/utils";
 
 const router = require('express').Router();
 
@@ -51,7 +52,6 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
             return result; 
         }
         
-        console.log(req.headers.id,startDate,endDate,accountId)
         //@ts-ignore
         const [currentPeriod] = await fetchFinancialData(
             //@ts-ignore
@@ -68,11 +68,82 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
             endDate
         )
 
+        const incomeChange = calculatePercentageChange(currentPeriod.income,lastPeriod.income)
+        const expensesChange = calculatePercentageChange(currentPeriod.expenses,lastPeriod.expenses)
+        const remainingChange = calculatePercentageChange(currentPeriod.remaining,lastPeriod.remaining)
+
+
+        const categories:{
+            name:string,
+            value:number
+        }[] = await prisma.$queryRaw`
+            SELECT 
+            c.name AS category,
+            SUM(ABS(amount::numeric)) AS value
+            FROM "Transaction" t
+            INNER JOIN "Category" c ON t."categoryId" = c.id
+            WHERE t."userId" = ${
+                //@ts-ignore
+                parseInt(req.headers.id)
+            }
+            AND t."accountId" = ${parseInt(accountId)}
+            AND t."date" >= ${startDate}
+            AND t."date" <= ${endDate}
+            AND t.amount::numeric  < 0
+
+            GROUP BY c.name
+            ORDER BY value DESC;
+        `;
+
+        const topCategories = categories.slice(0,3);
+        const otherCategories = categories.slice(3);
+
+        const otherSum = otherCategories.reduce((sum,curr)=>sum + curr.value,0)
+
+        const finalCategories = topCategories
+
+        if(otherCategories.length > 0)
+        {
+            finalCategories.push({
+                name:'Other',
+                value:otherSum
+            })
+        }
+
+        const activeDays:{
+            date:Date,
+            income:number
+            expenses:number
+        }[] = await prisma.$queryRaw`
+            SELECT 
+            t."date" as date,
+            SUM(CASE WHEN t.amount::numeric > 0 THEN t.amount::numeric ELSE 0 END) AS income,
+            SUM(CASE WHEN t.amount::numeric < 0 THEN ABS(t.amount::numeric) ELSE 0 END) AS expenses
+            FROM "Transaction" t
+            WHERE t."userId" = ${
+                //@ts-ignore
+                parseInt(req.headers.id)
+            }
+            AND t."accountId" = ${parseInt(accountId)}
+            AND t."date" >= ${startDate}
+            AND t."date" <= ${endDate}
+            GROUP BY t."date"
+            ORDER BY t."date" ASC;
+        `;
+
+        const finalDays = fillMissingDates(activeDays,startDate,endDate)
+
         return res.status(200).send({
             success:true,
             data:{
-                currentPeriod,
-                lastPeriod
+                remainingAmount:currentPeriod.remaining,
+                remainingChange,
+                incomeAmount:currentPeriod.income,
+                incomeChange,
+                expensesAmount:currentPeriod.expenses,
+                expensesChange,
+                categories:finalCategories,
+                days:finalDays
             }
         })
 
