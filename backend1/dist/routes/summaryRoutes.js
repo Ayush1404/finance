@@ -38,13 +38,12 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
         function fetchFinancialData(userId, startDate, endDate) {
             return __awaiter(this, void 0, void 0, function* () {
                 const result = yield dbconfig_1.prisma.$queryRaw `
-              SELECT
-                SUM(CASE WHEN amount::numeric > 0 THEN amount::numeric ELSE 0 END) AS income,
-                SUM(CASE WHEN amount::numeric < 0 THEN amount::numeric ELSE 0 END) AS expenses,
-                SUM(amount::numeric) AS remaining
-              FROM "Transaction"
-    
-              WHERE "userId" = ${parseInt(userId)}
+            SELECT
+                COALESCE(SUM(CASE WHEN amount::numeric > 0 THEN amount::numeric ELSE 0 END), 0) AS income,
+                COALESCE(SUM(CASE WHEN amount::numeric < 0 THEN amount::numeric ELSE 0 END), 0) AS expenses,
+                COALESCE(SUM(amount::numeric), 0) AS remaining
+            FROM "Transaction"
+                WHERE "userId" = ${parseInt(userId)}
                 AND "accountId" = ${parseInt(accountId)}
                 AND "date" >= ${startDate}
                 AND "date" <= ${endDate}
@@ -59,10 +58,10 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
         //@ts-ignore
         const [lastPeriod] = yield fetchFinancialData(
         //@ts-ignore
-        req.headers.id, startDate, endDate);
-        const incomeChange = (0, utils_1.calculatePercentageChange)(currentPeriod.income, lastPeriod.income);
-        const expensesChange = (0, utils_1.calculatePercentageChange)(currentPeriod.expenses, lastPeriod.expenses);
-        const remainingChange = (0, utils_1.calculatePercentageChange)(currentPeriod.remaining, lastPeriod.remaining);
+        req.headers.id, lastPeriodStart, lastPeriodEnd);
+        const incomeChange = (0, utils_1.calculatePercentageChange)(currentPeriod.income, Number(lastPeriod.income));
+        const expensesChange = (0, utils_1.calculatePercentageChange)(currentPeriod.expenses, Number(lastPeriod.expenses));
+        const remainingChange = (0, utils_1.calculatePercentageChange)(currentPeriod.remaining, Number(lastPeriod.remaining));
         const categories = yield dbconfig_1.prisma.$queryRaw `
             SELECT 
             c.name AS category,
@@ -109,13 +108,14 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
         return res.status(200).send({
             success: true,
             data: {
-                currentPeriod,
-                lastPeriod,
-                incomeChange,
-                expensesChange,
+                remainingAmount: currentPeriod.remaining,
                 remainingChange,
-                finalCategories,
-                finalDays
+                incomeAmount: currentPeriod.income,
+                incomeChange,
+                expensesAmount: currentPeriod.expenses,
+                expensesChange: expensesChange * -1,
+                categories: finalCategories,
+                days: finalDays
             }
         });
     }

@@ -5,7 +5,7 @@ exports.fillMissingDates = fillMissingDates;
 const date_fns_1 = require("date-fns");
 function calculatePercentageChange(current, previous) {
     if (previous === 0) {
-        return previous === current ? 100 : 0;
+        return previous === current ? 0 : 100;
     }
     return ((current - previous) / previous) * 100;
 }

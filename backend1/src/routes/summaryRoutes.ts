@@ -37,18 +37,16 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
             endDate: Date,
         ){
             const result = await prisma.$queryRaw`
-              SELECT
-                SUM(CASE WHEN amount::numeric > 0 THEN amount::numeric ELSE 0 END) AS income,
-                SUM(CASE WHEN amount::numeric < 0 THEN amount::numeric ELSE 0 END) AS expenses,
-                SUM(amount::numeric) AS remaining
-              FROM "Transaction"
-    
-              WHERE "userId" = ${parseInt(userId)}
+            SELECT
+                COALESCE(SUM(CASE WHEN amount::numeric > 0 THEN amount::numeric ELSE 0 END), 0) AS income,
+                COALESCE(SUM(CASE WHEN amount::numeric < 0 THEN amount::numeric ELSE 0 END), 0) AS expenses,
+                COALESCE(SUM(amount::numeric), 0) AS remaining
+            FROM "Transaction"
+                WHERE "userId" = ${parseInt(userId)}
                 AND "accountId" = ${parseInt(accountId)}
                 AND "date" >= ${startDate}
                 AND "date" <= ${endDate}
             `;
-          
             return result; 
         }
         
@@ -64,14 +62,13 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
         const [lastPeriod] = await fetchFinancialData(
             //@ts-ignore
             req.headers.id,
-            startDate,
-            endDate
+            lastPeriodStart,
+            lastPeriodEnd
         )
-
-        const incomeChange = calculatePercentageChange(currentPeriod.income,lastPeriod.income)
-        const expensesChange = calculatePercentageChange(currentPeriod.expenses,lastPeriod.expenses)
-        const remainingChange = calculatePercentageChange(currentPeriod.remaining,lastPeriod.remaining)
-
+        
+        const incomeChange = calculatePercentageChange(currentPeriod.income,Number(lastPeriod.income))
+        const expensesChange = calculatePercentageChange(currentPeriod.expenses,Number(lastPeriod.expenses))
+        const remainingChange = calculatePercentageChange(currentPeriod.remaining,Number(lastPeriod.remaining))
 
         const categories:{
             name:string,
@@ -141,7 +138,7 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
                 incomeAmount:currentPeriod.income,
                 incomeChange,
                 expensesAmount:currentPeriod.expenses,
-                expensesChange,
+                expensesChange:expensesChange*-1,
                 categories:finalCategories,
                 days:finalDays
             }
