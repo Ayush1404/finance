@@ -75,7 +75,7 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
             value:number
         }[] = await prisma.$queryRaw`
             SELECT 
-            c.name AS category,
+            c.name,
             SUM(ABS(amount::numeric)) AS value
             FROM "Transaction" t
             INNER JOIN "Category" c ON t."categoryId" = c.id

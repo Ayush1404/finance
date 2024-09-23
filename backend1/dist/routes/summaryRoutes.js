@@ -64,7 +64,7 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
         const remainingChange = (0, utils_1.calculatePercentageChange)(currentPeriod.remaining, Number(lastPeriod.remaining));
         const categories = yield dbconfig_1.prisma.$queryRaw `
             SELECT 
-            c.name AS category,
+            c.name,
             SUM(ABS(amount::numeric)) AS value
             FROM "Transaction" t
             INNER JOIN "Category" c ON t."categoryId" = c.id

@@ -3,7 +3,7 @@ import DataGrid from "../components/Dashboard/DataGrid"
 import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import summaryAtom from "../store/summaryAtom"
-import { useRecoilState, useSetRecoilState } from "recoil"
+import { useSetRecoilState } from "recoil"
 import axios from "axios"
 import { convertAmountFromMiliUnits, formatDateRange } from "../lib/utils"
 import DataCharts from "../components/Dashboard/DataCharts"
@@ -22,11 +22,13 @@ const Dashboard = () => {
           const token = localStorage.getItem('authToken');
           const values = {
           accountId: '7',
-          from: "2024-09-01",
+          from: "2024-08-18",
           to: "2024-09-18"
           }
           const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/summary`,{
-              accountId: '7'
+                accountId: '7',
+                from: "2024-08-18",
+                to: "2024-09-18"
               },{
               headers: {
                   'Authorization': `Bearer ${token}`,
@@ -39,11 +41,11 @@ const Dashboard = () => {
                   incomeAmount:convertAmountFromMiliUnits(response.data.data.incomeAmount),
                   expensesAmount:convertAmountFromMiliUnits(response.data.data.expensesAmount),
                   categories:response.data.data.categories.map((category:any)=>({
-                  ...category,
-                  value:convertAmountFromMiliUnits(category.value)
+                    ...category,
+                    value:convertAmountFromMiliUnits(category.value)
                   })),
-                  days:response.data.data.days.map((day:any)=>({
-                  ...day,
+                    days:response.data.data.days.map((day:any)=>({
+                    ...day,
                   income:convertAmountFromMiliUnits(day.income),
                   expenses:convertAmountFromMiliUnits(day.expenses)
                   })),
