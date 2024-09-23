@@ -1,6 +1,7 @@
 import  Navigation from "./Navigation"
 import HeaderLogo from "./HeaderLogo"
 import WelcomeMsg from "./WelcomeMsg"
+import Filters from "./Filters"
 
 const Header = () => {
   return (
@@ -13,6 +14,7 @@ const Header = () => {
                 </div>
             </div>
             <WelcomeMsg />
+            <Filters />
         </div>
     </header>
   )

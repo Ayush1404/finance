@@ -21,9 +21,9 @@ const Dashboard = () => {
           setLoading(true)
           const token = localStorage.getItem('authToken');
           const values = {
-          accountId: '7',
-          from: "2024-08-18",
-          to: "2024-09-18"
+            accountId: '7',
+            from: "2024-08-18",
+            to: "2024-09-18"
           }
           const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/summary`,{
                 accountId: '7',
