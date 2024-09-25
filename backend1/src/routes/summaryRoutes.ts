@@ -26,6 +26,9 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
         const startDate =  from ? parse(from , 'yyyy-MM-dd' , new Date()) : defaultFrom
         const endDate =  to ? parse(to , 'yyyy-MM-dd' , new Date()) : defaultTo
 
+        console.log(startDate)
+        console.log(endDate)
+
         const periodLength = differenceInDays(endDate,startDate)+1;
         const lastPeriodStart =  subDays(startDate,periodLength) 
         const lastPeriodEnd =  subDays(endDate,periodLength) 
@@ -36,7 +39,17 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
             startDate: Date,
             endDate: Date,
         ){
-            const result = await prisma.$queryRaw`
+            const result = accountId==='all' ?
+            await prisma.$queryRaw`
+            SELECT
+                COALESCE(SUM(CASE WHEN amount::numeric > 0 THEN amount::numeric ELSE 0 END), 0) AS income,
+                COALESCE(SUM(CASE WHEN amount::numeric < 0 THEN amount::numeric ELSE 0 END), 0) AS expenses,
+                COALESCE(SUM(amount::numeric), 0) AS remaining
+            FROM "Transaction"
+                WHERE "userId" = ${parseInt(userId)}
+                AND "date" >= ${startDate}
+                AND "date" <= ${endDate}
+            `:   await prisma.$queryRaw`
             SELECT
                 COALESCE(SUM(CASE WHEN amount::numeric > 0 THEN amount::numeric ELSE 0 END), 0) AS income,
                 COALESCE(SUM(CASE WHEN amount::numeric < 0 THEN amount::numeric ELSE 0 END), 0) AS expenses,
@@ -73,7 +86,23 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
         const categories:{
             name:string,
             value:number
-        }[] = await prisma.$queryRaw`
+        }[] = accountId==='all' ? await prisma.$queryRaw`
+            SELECT 
+            c.name,
+            SUM(ABS(amount::numeric)) AS value
+            FROM "Transaction" t
+            INNER JOIN "Category" c ON t."categoryId" = c.id
+            WHERE t."userId" = ${
+                //@ts-ignore
+                parseInt(req.headers.id)
+            }
+            AND t."date" >= ${startDate}
+            AND t."date" <= ${endDate}
+            AND t.amount::numeric  < 0
+
+            GROUP BY c.name
+            ORDER BY value DESC;
+        `:await prisma.$queryRaw`
             SELECT 
             c.name,
             SUM(ABS(amount::numeric)) AS value
@@ -111,7 +140,22 @@ router.post('/',authenticateJwt,async (req: Request, res: Response)=>{
             date:Date,
             income:number
             expenses:number
-        }[] = await prisma.$queryRaw`
+        }[] = accountId==='all' ? 
+            await prisma.$queryRaw`
+                SELECT 
+                t."date" as date,
+                SUM(CASE WHEN t.amount::numeric > 0 THEN t.amount::numeric ELSE 0 END) AS income,
+                SUM(CASE WHEN t.amount::numeric < 0 THEN ABS(t.amount::numeric) ELSE 0 END) AS expenses
+                FROM "Transaction" t
+                WHERE t."userId" = ${
+                    //@ts-ignore
+                    parseInt(req.headers.id)
+                }
+                AND t."date" >= ${startDate}
+                AND t."date" <= ${endDate}
+                GROUP BY t."date"
+                ORDER BY t."date" ASC;
+            `:await prisma.$queryRaw`
             SELECT 
             t."date" as date,
             SUM(CASE WHEN t.amount::numeric > 0 THEN t.amount::numeric ELSE 0 END) AS income,

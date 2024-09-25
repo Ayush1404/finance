@@ -32,12 +32,24 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
         const defaultFrom = (0, date_fns_1.subDays)(defaultTo, 30);
         const startDate = from ? (0, date_fns_1.parse)(from, 'yyyy-MM-dd', new Date()) : defaultFrom;
         const endDate = to ? (0, date_fns_1.parse)(to, 'yyyy-MM-dd', new Date()) : defaultTo;
+        console.log(startDate);
+        console.log(endDate);
         const periodLength = (0, date_fns_1.differenceInDays)(endDate, startDate) + 1;
         const lastPeriodStart = (0, date_fns_1.subDays)(startDate, periodLength);
         const lastPeriodEnd = (0, date_fns_1.subDays)(endDate, periodLength);
         function fetchFinancialData(userId, startDate, endDate) {
             return __awaiter(this, void 0, void 0, function* () {
-                const result = yield dbconfig_1.prisma.$queryRaw `
+                const result = accountId === 'all' ?
+                    yield dbconfig_1.prisma.$queryRaw `
+            SELECT
+                COALESCE(SUM(CASE WHEN amount::numeric > 0 THEN amount::numeric ELSE 0 END), 0) AS income,
+                COALESCE(SUM(CASE WHEN amount::numeric < 0 THEN amount::numeric ELSE 0 END), 0) AS expenses,
+                COALESCE(SUM(amount::numeric), 0) AS remaining
+            FROM "Transaction"
+                WHERE "userId" = ${parseInt(userId)}
+                AND "date" >= ${startDate}
+                AND "date" <= ${endDate}
+            ` : yield dbconfig_1.prisma.$queryRaw `
             SELECT
                 COALESCE(SUM(CASE WHEN amount::numeric > 0 THEN amount::numeric ELSE 0 END), 0) AS income,
                 COALESCE(SUM(CASE WHEN amount::numeric < 0 THEN amount::numeric ELSE 0 END), 0) AS expenses,
@@ -62,7 +74,22 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
         const incomeChange = (0, utils_1.calculatePercentageChange)(currentPeriod.income, Number(lastPeriod.income));
         const expensesChange = (0, utils_1.calculatePercentageChange)(currentPeriod.expenses, Number(lastPeriod.expenses));
         const remainingChange = (0, utils_1.calculatePercentageChange)(currentPeriod.remaining, Number(lastPeriod.remaining));
-        const categories = yield dbconfig_1.prisma.$queryRaw `
+        const categories = accountId === 'all' ? yield dbconfig_1.prisma.$queryRaw `
+            SELECT 
+            c.name,
+            SUM(ABS(amount::numeric)) AS value
+            FROM "Transaction" t
+            INNER JOIN "Category" c ON t."categoryId" = c.id
+            WHERE t."userId" = ${
+        //@ts-ignore
+        parseInt(req.headers.id)}
+            AND t."date" >= ${startDate}
+            AND t."date" <= ${endDate}
+            AND t.amount::numeric  < 0
+
+            GROUP BY c.name
+            ORDER BY value DESC;
+        ` : yield dbconfig_1.prisma.$queryRaw `
             SELECT 
             c.name,
             SUM(ABS(amount::numeric)) AS value
@@ -89,7 +116,21 @@ router.post('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 
                 value: otherSum
             });
         }
-        const activeDays = yield dbconfig_1.prisma.$queryRaw `
+        const activeDays = accountId === 'all' ?
+            yield dbconfig_1.prisma.$queryRaw `
+                SELECT 
+                t."date" as date,
+                SUM(CASE WHEN t.amount::numeric > 0 THEN t.amount::numeric ELSE 0 END) AS income,
+                SUM(CASE WHEN t.amount::numeric < 0 THEN ABS(t.amount::numeric) ELSE 0 END) AS expenses
+                FROM "Transaction" t
+                WHERE t."userId" = ${
+            //@ts-ignore
+            parseInt(req.headers.id)}
+                AND t."date" >= ${startDate}
+                AND t."date" <= ${endDate}
+                GROUP BY t."date"
+                ORDER BY t."date" ASC;
+            ` : yield dbconfig_1.prisma.$queryRaw `
             SELECT 
             t."date" as date,
             SUM(CASE WHEN t.amount::numeric > 0 THEN t.amount::numeric ELSE 0 END) AS income,

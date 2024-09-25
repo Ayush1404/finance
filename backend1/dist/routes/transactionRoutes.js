@@ -16,7 +16,7 @@ const dbconfig_1 = require("../config/dbconfig");
 const date_fns_1 = require("date-fns");
 const router = require('express').Router();
 exports.router = router;
-router.get('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post('/all', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { error } = (0, validators_1.transactionFilterValidate)(req.body);
         if (error) {
@@ -26,43 +26,79 @@ router.get('/', authMiddleware_1.authenticateJwt, (req, res) => __awaiter(void 0
             });
             return res.status(400).send({ errors, success: false });
         }
-        const { from, to, accountId } = req.body;
+        let { from, to, accountId } = req.body;
         const defaultTo = new Date();
         const defaultFrom = (0, date_fns_1.subDays)(defaultTo, 30);
         const startDate = from ? (0, date_fns_1.parse)(from, 'yyyy-MM-dd', new Date()) : defaultFrom;
         const endDate = to ? (0, date_fns_1.parse)(to, 'yyyy-MM-dd', new Date()) : defaultTo;
-        const transactions = yield dbconfig_1.prisma.transaction.findMany({
-            where: {
-                userId: Number(req.headers.id),
-                accountId,
-                date: {
-                    gte: startDate,
-                    lte: endDate
-                }
-            },
-            select: {
-                id: true,
-                categoryId: true,
-                date: true,
-                payee: true,
-                amount: true,
-                notes: true,
-                accountId: true,
-                account: {
-                    select: {
-                        name: true
+        let transactions;
+        if (accountId === 'all') {
+            transactions = yield dbconfig_1.prisma.transaction.findMany({
+                where: {
+                    userId: Number(req.headers.id),
+                    date: {
+                        gte: startDate,
+                        lte: endDate
                     }
                 },
-                category: {
-                    select: {
-                        name: true
+                select: {
+                    id: true,
+                    categoryId: true,
+                    date: true,
+                    payee: true,
+                    amount: true,
+                    notes: true,
+                    accountId: true,
+                    account: {
+                        select: {
+                            name: true
+                        }
+                    },
+                    category: {
+                        select: {
+                            name: true
+                        }
                     }
+                },
+                orderBy: {
+                    date: 'desc'
                 }
-            },
-            orderBy: {
-                date: 'desc'
-            }
-        });
+            });
+        }
+        else {
+            transactions = yield dbconfig_1.prisma.transaction.findMany({
+                where: {
+                    userId: Number(req.headers.id),
+                    accountId: Number(accountId),
+                    date: {
+                        gte: startDate,
+                        lte: endDate
+                    }
+                },
+                select: {
+                    id: true,
+                    categoryId: true,
+                    date: true,
+                    payee: true,
+                    amount: true,
+                    notes: true,
+                    accountId: true,
+                    account: {
+                        select: {
+                            name: true
+                        }
+                    },
+                    category: {
+                        select: {
+                            name: true
+                        }
+                    }
+                },
+                orderBy: {
+                    date: 'desc'
+                }
+            });
+        }
         return res.status(200).send({
             success: true,
             data: transactions

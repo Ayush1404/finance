@@ -105,9 +105,9 @@ export const transactionValidate = (data: any) => {
 // Transaction Filter validation
 export const transactionFilterValidate = (data: any) => {
   const schema = z.object({
-    from: z.string().optional(),
-    to: z.string().optional(),
-    accountId: z.string().optional()
+    from: z.string().optional().nullable(),
+    to: z.string().optional().nullable(),
+    accountId: z.string().optional().nullable()
   });
 
   try {
@@ -121,9 +121,9 @@ export const transactionFilterValidate = (data: any) => {
 // Summary Filter validation
 export const summaryFilterValidate = (data: any) => {
   const schema = z.object({
-    from: z.string().optional(),
-    to: z.string().optional(),
-    accountId: z.string().optional()
+    from: z.string().optional().nullable(),
+    to: z.string().optional().nullable(),
+    accountId: z.string().optional().nullable()
   });
 
   try {

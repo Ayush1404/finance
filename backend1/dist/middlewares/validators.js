@@ -106,9 +106,9 @@ exports.transactionValidate = transactionValidate;
 // Transaction Filter validation
 const transactionFilterValidate = (data) => {
     const schema = zod_1.z.object({
-        from: zod_1.z.string().optional(),
-        to: zod_1.z.string().optional(),
-        accountId: zod_1.z.string().optional()
+        from: zod_1.z.string().optional().nullable(),
+        to: zod_1.z.string().optional().nullable(),
+        accountId: zod_1.z.string().optional().nullable()
     });
     try {
         schema.parse(data);
@@ -122,9 +122,9 @@ exports.transactionFilterValidate = transactionFilterValidate;
 // Summary Filter validation
 const summaryFilterValidate = (data) => {
     const schema = zod_1.z.object({
-        from: zod_1.z.string().optional(),
-        to: zod_1.z.string().optional(),
-        accountId: zod_1.z.string().optional()
+        from: zod_1.z.string().optional().nullable(),
+        to: zod_1.z.string().optional().nullable(),
+        accountId: zod_1.z.string().optional().nullable()
     });
     try {
         schema.parse(data);

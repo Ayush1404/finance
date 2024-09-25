@@ -9,12 +9,13 @@ import qs from 'query-string'
 import { ChevronDown } from "lucide-react"
 import { Calendar } from "./ui/calendar"
 
+
 const DateFilter = () => {
     const [params] = useSearchParams()
     const pathname = useLocation().pathname
     const accountId = params.get('accountId') || 'all'
-    const from = params.get('from') || ''
-    const to = params.get('to') || ''
+    const from = params.get('from') || null
+    const to = params.get('to') || null
     const navigate = useNavigate()
 
     const defaultTo = new Date();
@@ -26,6 +27,9 @@ const DateFilter = () => {
     }
 
     const [date,setDate] = useState<DateRange | undefined>(paramState)
+    
+    
+
 
     const pushToUrl = (dateRange:DateRange | undefined) =>{
         const query = {
@@ -39,13 +43,15 @@ const DateFilter = () => {
             query
         },{ skipNull: false , skipEmptyString : true})
 
-        navigate(url) 
+        navigate(url)
+         
     }
 
     const onReset = () => {
         setDate(undefined)
         pushToUrl(undefined)
     }
+
 
     return (
         <Popover>

@@ -6,7 +6,7 @@ import { parse, subDays } from 'date-fns';
 
 const router = require('express').Router();
 
-router.get('/', authenticateJwt, async (req: Request, res: Response) => {
+router.post('/all', authenticateJwt, async (req: Request, res: Response) => {
     try {
 
         const { error } = transactionFilterValidate(req.body)
@@ -19,46 +19,82 @@ router.get('/', authenticateJwt, async (req: Request, res: Response) => {
             return res.status(400).send({ errors, success: false });
         }
 
-        const { from , to , accountId } = req.body;
+        let { from , to , accountId } = req.body;
+        
         const defaultTo = new Date();
         const defaultFrom = subDays(defaultTo,30);
 
         const startDate =  from ? parse(from , 'yyyy-MM-dd' , new Date()) : defaultFrom
         const endDate =  to ? parse(to , 'yyyy-MM-dd' , new Date()) : defaultTo
-
-        const transactions = await prisma.transaction.findMany({
-            where: { 
-                userId: Number(req.headers.id), 
-                accountId,
-                date:{
-                    gte:startDate,
-                    lte:endDate
-                }
-            },
-            select: {
-                id: true,
-                categoryId: true,
-                date:true,
-                payee: true,
-                amount: true,
-                notes: true,
-                accountId: true,
-                account: {
-                    select: {
-                        name: true
+        let transactions;
+        if(accountId === 'all'){
+            transactions = await prisma.transaction.findMany({
+                where: { 
+                    userId: Number(req.headers.id), 
+                    date:{
+                        gte:startDate,
+                        lte:endDate
                     }
                 },
-                category: {
-                    select: {
-                        name: true
+                select: {
+                    id: true,
+                    categoryId: true,
+                    date:true,
+                    payee: true,
+                    amount: true,
+                    notes: true,
+                    accountId: true,
+                    account: {
+                        select: {
+                            name: true
+                        }
+                    },
+                    category: {
+                        select: {
+                            name: true
+                        }
                     }
+                },
+                orderBy:{
+                    date:'desc'
                 }
-            },
-            orderBy:{
-                date:'desc'
-            }
-        });
-
+            });
+        }
+        
+        else{
+            transactions = await prisma.transaction.findMany({
+                where: { 
+                    userId: Number(req.headers.id), 
+                    accountId:Number(accountId),
+                    date:{
+                        gte:startDate,
+                        lte:endDate
+                    }
+                },
+                select: {
+                    id: true,
+                    categoryId: true,
+                    date:true,
+                    payee: true,
+                    amount: true,
+                    notes: true,
+                    accountId: true,
+                    account: {
+                        select: {
+                            name: true
+                        }
+                    },
+                    category: {
+                        select: {
+                            name: true
+                        }
+                    }
+                },
+                orderBy:{
+                    date:'desc'
+                }
+            });
+        }
         return res.status(200).send({
             success: true,
             data: transactions

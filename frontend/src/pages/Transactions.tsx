@@ -13,11 +13,17 @@ import { Skeleton } from "../components/ui/skeleton"
 import disabledAtom from "../store/disabledAtom"
 import accountsAtom from "../store/accountsAtom"
 import categoriesAtom from "../store/categoriesAtom"
+import { useSearchParams } from "react-router-dom"
+import { format } from "date-fns"
 
 const Transactions = () => {
+    const [params] = useSearchParams()
+    const accountId = params.get('accountId') || 'all'
+    const to = params.get('to') 
+    const from = params.get('from') 
     const [transactions,setTransactions] = useRecoilState(transactionsAtom)
-    const [accounts,setAccounts] = useRecoilState(accountsAtom)
-    const [categories,setCategories] = useRecoilState(categoriesAtom)
+    const setAccounts = useSetRecoilState(accountsAtom)
+    const setCategories = useSetRecoilState(categoriesAtom)
     const [loading,setLoading] = useState(false)
     const [disabled,setDisabled] = useRecoilState(disabledAtom)
     const setIsNewTransactionOpen = useSetRecoilState(newTransactionSheet)
@@ -59,7 +65,11 @@ const Transactions = () => {
             setLoading(true)
             const token = localStorage.getItem('authToken');
 
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/transaction`, {
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/transaction/all`,{
+                accountId,
+                from: from ? format(from,'yyyy-MM-dd'):null,
+                to: to ? format(to,'yyyy-MM-dd'):null
+            },{
                 headers: {
                 'Authorization': `Bearer ${token}`,
                 },
@@ -145,9 +155,13 @@ const Transactions = () => {
     
     useEffect(()=>{
         getTransactionData()
+    },[params])
+
+    useEffect(()=>{
         getCategoryData()
         getAccountData()
     },[])
+
 
     if(loading) return(
         <div className="max-w-screen-2xl mx-auto w-full pb-10 -mt-24">

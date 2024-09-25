@@ -3,8 +3,8 @@ import { format, subDays } from "date-fns"
 import { twMerge } from "tailwind-merge"
 
 type Period = {
-  from:Date | undefined |  string 
-  to:Date | undefined |  string
+  from:Date | null |  string 
+  to:Date | null |  string
 }
 
 export function cn(...inputs: ClassValue[]) {
